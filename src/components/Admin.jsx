@@ -17,8 +17,10 @@ const MENU_ITEMS = [
   { id: 4, title: "Tok Bowl", price: "49 tk", img: "/assets/tok bowl.png" }
 ];
 
+import { Snowflake, RefreshCw } from 'lucide-react';
+
 export default function Admin() {
-  const { orders, updateOrderStatus, deleteOrder, clearAllOrders, addManualSale } = useOrders();
+  const { orders, updateOrderStatus, deleteOrder, clearAllOrders, addManualSale, systemConfig, toggleFreezeOrders } = useOrders();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showManualForm, setShowManualForm] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -27,13 +29,13 @@ export default function Admin() {
   const [manualItems, setManualItems] = useState([]);
 
   const stats = useMemo(() => {
-    const totalSales = orders.reduce((acc, o) => acc + o.total, 0);
+    const totalSales = orders.reduce((acc, o) => acc + (o.totalAmount || o.total || 0), 0);
     const pendingOrders = orders.filter(o => o.status === 'pending').length;
-    const completedOrders = orders.filter(o => o.status === 'completed').length;
+    const completedOrders = orders.filter(o => o.status === 'delivered' || o.status === 'completed').length;
     
     const dailySales = orders.reduce((acc, o) => {
-      const date = o.date.split('T')[0];
-      acc[date] = (acc[date] || 0) + o.total;
+      const date = (o.createdAt || o.date || new Date().toISOString()).split('T')[0];
+      acc[date] = (acc[date] || 0) + (o.totalAmount || o.total || 0);
       return acc;
     }, {});
 
@@ -121,13 +123,26 @@ export default function Admin() {
                   <h1 className="text-3xl md:text-4xl font-heading font-bold text-[var(--color-gold)]">Overview</h1>
                   <p className="opacity-50 mt-1 text-xs uppercase tracking-[0.2em]">Business Performance</p>
                 </div>
-                <button 
-                  onClick={() => setShowManualForm(true)}
-                  className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[var(--color-gold)] text-[var(--color-olive)] px-6 py-3 rounded-full font-bold shadow-lg hover:scale-105 transition-transform"
-                >
-                  <Plus size={18} />
-                  <span>Record Sale</span>
-                </button>
+                <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                  <button 
+                    onClick={toggleFreezeOrders}
+                    className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-full font-bold transition-all border ${
+                      systemConfig.isOrdersFrozen 
+                        ? 'bg-blue-500/10 text-blue-400 border-blue-500/30' 
+                        : 'bg-white/5 text-[var(--color-ivory)] border-white/10 hover:bg-white/10'
+                    }`}
+                  >
+                    {systemConfig.isOrdersFrozen ? <RefreshCw size={18} className="animate-spin" /> : <Snowflake size={18} />}
+                    <span>{systemConfig.isOrdersFrozen ? 'Unfreeze Orders' : 'Freeze Orders'}</span>
+                  </button>
+                  <button 
+                    onClick={() => setShowManualForm(true)}
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-[var(--color-gold)] text-[var(--color-olive)] px-6 py-3 rounded-full font-bold shadow-lg hover:scale-105 transition-transform"
+                  >
+                    <Plus size={18} />
+                    <span>Record Sale</span>
+                  </button>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
@@ -163,13 +178,13 @@ export default function Admin() {
                     {orders.slice(0, 8).map(order => (
                       <div key={order.id} className="flex justify-between items-center p-3 md:p-4 rounded-2xl bg-white/5 border border-white/5">
                         <div className="flex gap-3 items-center min-w-0">
-                          <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${order.status === 'completed' ? 'bg-green-400' : 'bg-yellow-400'}`} />
+                          <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${order.status === 'delivered' || order.status === 'completed' ? 'bg-green-400' : 'bg-yellow-400'}`} />
                           <div className="truncate">
-                            <p className="font-bold text-xs md:text-sm truncate">{order.customer.name || 'Walk-in'}</p>
+                            <p className="font-bold text-xs md:text-sm truncate">{order.customerName || order.customer?.name || 'Walk-in'}</p>
                             <p className="text-[9px] md:text-[10px] opacity-40 font-mono uppercase truncate">{order.id}</p>
                           </div>
                         </div>
-                        <p className="text-[var(--color-gold)] font-bold text-sm ml-2 flex-shrink-0">৳ {order.total}</p>
+                        <p className="text-[var(--color-gold)] font-bold text-sm ml-2 flex-shrink-0">৳ {order.totalAmount || order.total}</p>
                       </div>
                     ))}
                     {orders.length === 0 && <p className="text-center opacity-30 italic text-sm py-8">No recent activity</p>}

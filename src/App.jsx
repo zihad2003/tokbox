@@ -4,7 +4,7 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
 import 'leaflet/dist/leaflet.css';
-import { Phone, MapPin, Instagram, Facebook, ShoppingBag, Settings } from 'lucide-react';
+import { Phone, MapPin, Instagram, Facebook, ShoppingBag, Settings, Truck, MessageCircle } from 'lucide-react';
 import Hero from './components/Hero';
 import Menu from './components/Menu';
 import Admin from './components/Admin';
@@ -13,9 +13,13 @@ import { OrderProvider, useOrders } from './context/OrderContext';
 
 gsap.registerPlugin(ScrollTrigger);
 
+import { Toaster } from 'react-hot-toast';
+import { motion } from 'framer-motion';
+
 export default function App() {
   return (
     <OrderProvider>
+      <Toaster position="bottom-right" reverseOrder={false} />
       <Router>
         <Routes>
           <Route path="/" element={<MainLayout />} />
@@ -57,6 +61,13 @@ function MainLayout() {
       setIsScrolled(e.scroll > 50);
     });
 
+    // CRITICAL: Ensure ScrollTrigger is refreshed after initial load
+    window.addEventListener('load', () => ScrollTrigger.refresh());
+    
+    // Refresh on any dynamic height changes
+    const resizeObserver = new ResizeObserver(() => ScrollTrigger.refresh());
+    resizeObserver.observe(document.body);
+
     gsap.ticker.add((time) => {
       lenis.raf(time * 1000);
     });
@@ -66,6 +77,7 @@ function MainLayout() {
     return () => {
       lenis.destroy();
       gsap.ticker.remove(raf);
+      resizeObserver.disconnect();
     };
   }, []);
 
@@ -124,7 +136,6 @@ function MainLayout() {
 function CraftSection() {
   const pathRef = useRef(null);
   const sectionRef = useRef(null);
-  const contentRef = useRef(null);
 
   useLayoutEffect(() => {
     if (!pathRef.current) return;
@@ -144,29 +155,15 @@ function CraftSection() {
     tl.to(pathRef.current, {
       strokeDashoffset: 0,
       ease: "none"
-    })
-    .from(".craft-card", {
-      y: 80,
-      opacity: 0,
-      stagger: 0.1,
-      scale: 0.9,
-      duration: 0.8,
-      ease: "power3.out"
-    }, "-=0.3")
-    .from(".craft-title-reveal", {
-      y: 30,
-      opacity: 0,
-      duration: 0.6,
-      ease: "power2.out"
-    }, "-=0.5");
+    });
   }, []);
 
   return (
-    <section ref={sectionRef} className="relative min-h-screen bg-[#1b1f13] flex items-center justify-center overflow-hidden z-10">
+    <section ref={sectionRef} className="relative min-h-screen bg-[#1b1f13] flex items-center justify-center overflow-hidden z-10 py-24 sm:py-32">
       {/* Background Ambience */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--color-gold)_0%,_transparent_70%)] opacity-[0.03] pointer-events-none" />
 
-      {/* Cinematic Abstract Line - Simplified for Mobile */}
+      {/* Cinematic Abstract Line */}
       <div className="absolute inset-0 pointer-events-none z-0">
         <svg width="100%" height="100%" viewBox="0 0 1000 1000" fill="none" preserveAspectRatio="xMidYMid slice" className="opacity-30 lg:opacity-40">
           <path 
@@ -182,24 +179,49 @@ function CraftSection() {
 
       <div className="relative z-10 w-full max-w-[1400px] mx-auto px-6">
         <div className="text-center mb-12 lg:mb-24 space-y-4 sm:space-y-6">
-          <h3 className="craft-title-reveal text-[var(--color-gold)] uppercase tracking-[0.3em] sm:tracking-[0.5em] text-[10px] sm:text-xs font-bold opacity-60">The Craftsmanship</h3>
-          <h2 className="craft-title-reveal text-4xl sm:text-6xl lg:text-8xl font-heading font-black leading-tight sm:leading-none tracking-tighter">
+          <motion.h3 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 0.6, y: 0 }}
+            viewport={{ once: true }}
+            className="text-[var(--color-gold)] uppercase tracking-[0.3em] sm:tracking-[0.5em] text-[10px] sm:text-xs font-bold"
+          >
+            The Craftsmanship
+          </motion.h3>
+          <motion.h2 
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="text-4xl sm:text-6xl lg:text-8xl font-heading font-black leading-tight sm:leading-none tracking-tighter"
+          >
             Elevating <span className="text-[var(--color-gold)] italic">Street Soul</span>
-          </h2>
+          </motion.h2>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-12 items-center lg:items-end">
           {/* Card 1 */}
-          <div className="craft-card glass p-6 sm:p-8 rounded-[32px] sm:rounded-[40px] space-y-4 sm:space-y-6 lg:-rotate-3 hover:rotate-0 transition-transform duration-500 order-2 lg:order-1">
+          <motion.div 
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="craft-card glass p-6 sm:p-8 rounded-[32px] sm:rounded-[40px] space-y-4 sm:space-y-6 lg:-rotate-3 hover:rotate-0 transition-transform duration-500 order-2 lg:order-1"
+          >
             <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-[var(--color-gold)]/10 flex items-center justify-center text-[var(--color-gold)]">
               <span className="text-xl sm:text-2xl font-heading font-bold">01</span>
             </div>
             <h4 className="text-xl sm:text-2xl font-heading font-bold">The Golden Crunch</h4>
             <p className="opacity-40 text-xs sm:text-sm leading-relaxed">Each shell is hand-pressed to ensure the perfect ratio of crispness to bite.</p>
-          </div>
+          </motion.div>
 
           {/* Center Card - Featured */}
-          <div className="craft-card glass-dark p-8 sm:p-10 rounded-[32px] sm:rounded-[40px] space-y-6 sm:space-y-8 border-t-2 border-[var(--color-gold)]/30 lg:scale-110 z-20 shadow-2xl order-1 lg:order-2">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9, y: 50 }}
+            whileInView={{ opacity: 1, scale: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.3 }}
+            className="craft-card glass-dark p-8 sm:p-10 rounded-[32px] sm:rounded-[40px] space-y-6 sm:space-y-8 border-t-2 border-[var(--color-gold)]/30 lg:scale-110 z-20 shadow-2xl order-1 lg:order-2"
+          >
              <div className="relative h-32 sm:h-48 flex items-center justify-center">
                 <img src="/assets/tok classic.png" className="w-3/5 sm:w-4/5 h-auto drop-shadow-[0_20px_40px_rgba(0,0,0,0.5)] animate-float" alt="Featured" />
              </div>
@@ -207,16 +229,22 @@ function CraftSection() {
                <h4 className="text-2xl sm:text-3xl font-heading font-bold text-[var(--color-gold)]">Signature Fusion</h4>
                <p className="opacity-60 text-xs sm:text-sm leading-relaxed">Our secret tamarind water is brewed for 24 hours with 12 distinct spices.</p>
              </div>
-          </div>
+          </motion.div>
 
           {/* Card 3 */}
-          <div className="craft-card glass p-6 sm:p-8 rounded-[32px] sm:rounded-[40px] space-y-4 sm:space-y-6 lg:rotate-3 hover:rotate-0 transition-transform duration-500 order-3">
+          <motion.div 
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.4 }}
+            className="craft-card glass p-6 sm:p-8 rounded-[32px] sm:rounded-[40px] space-y-4 sm:space-y-6 lg:rotate-3 hover:rotate-0 transition-transform duration-500 order-3"
+          >
             <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-[var(--color-gold)]/10 flex items-center justify-center text-[var(--color-gold)]">
               <span className="text-xl sm:text-2xl font-heading font-bold">03</span>
             </div>
             <h4 className="text-xl sm:text-2xl font-heading font-bold">Dhoi Velvet</h4>
             <p className="opacity-40 text-xs sm:text-sm leading-relaxed">Cultured yogurt whipped into a silky texture that balances the heat.</p>
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>
@@ -224,7 +252,6 @@ function CraftSection() {
 }
 
 function DeliverySection() {
-  const svgRef = useRef(null);
   const pathRef = useRef(null);
   const sectionRef = useRef(null);
 
@@ -250,132 +277,247 @@ function DeliverySection() {
     tl.to(pathRef.current, {
       strokeDashoffset: 0,
       ease: "none"
-    })
-    .from(".delivery-node", {
-      scale: 0,
-      opacity: 0,
-      stagger: 0.2,
-      duration: 0.5,
-      ease: "back.out(1.7)"
-    }, "-=0.5")
-    .from(".delivery-text-reveal", {
-      y: 30,
-      opacity: 0,
-      stagger: 0.1,
-      duration: 0.8,
-      ease: "power3.out"
-    }, "-=1");
+    });
   }, []);
 
   return (
-    <section id="delivery" ref={sectionRef} className="relative py-24 px-6 overflow-hidden bg-[#1b1f13]">
-      {/* Background Map Texture */}
-      <div className="absolute inset-0 opacity-[0.02] pointer-events-none grayscale invert mix-blend-overlay">
-        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="0.5"/>
-          </pattern>
-          <rect width="100%" height="100%" fill="url(#grid)" />
-        </svg>
-      </div>
+    <section id="delivery" ref={sectionRef} className="relative py-24 px-6 overflow-hidden bg-[#14180d]">
+      {/* Background Atmosphere - Darker as in user photo */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,_rgba(197,160,89,0.03)_0%,_transparent_60%)] pointer-events-none" />
 
       <div className="max-w-[1200px] mx-auto relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-          <div className="space-y-6 order-2 lg:order-1">
-            <h2 className="delivery-text-reveal text-5xl md:text-7xl font-heading font-bold leading-tight">
-              Tok-to-<span className="text-[var(--color-gold)] italic">Door</span>
-            </h2>
+          
+          {/* Left Side Content */}
+          <div className="space-y-10 order-2 lg:order-1">
             <div className="space-y-4">
-               <DeliveryInfo title="Rampura Hub" desc="Our culinary heart, where the magic begins." />
-               <DeliveryInfo title="Dhaka Badda" desc="Fast-track transit through the city's pulse." />
-               <DeliveryInfo title="Kuril Terminal" desc="Delivering gourmet crunch to the northern edge." />
+              <motion.h3 
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 0.4, y: 0 }}
+                viewport={{ once: true }}
+                className="text-[var(--color-gold)] uppercase tracking-[0.5em] text-[10px] font-bold"
+              >
+                Fast Transit
+              </motion.h3>
+              <motion.h2 
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.1 }}
+                className="text-6xl md:text-8xl font-heading font-bold leading-[0.8] tracking-tighter"
+              >
+                Tok-to-<br /><span className="text-[var(--color-gold)] italic">Door</span>
+              </motion.h2>
             </div>
+            
+            <div className="space-y-8">
+               <DeliveryInfo 
+                 title="Rampura Hub" 
+                 desc="The heart of our kitchen, where every signature crunch begins its journey." 
+                 delay={0.2}
+               />
+               <DeliveryInfo 
+                 title="Dhaka Badda" 
+                 desc="Our fast-track transit node ensuring the perfect heat-to-crunch ratio." 
+                 delay={0.3}
+               />
+            </div>
+
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 0.3, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.4 }}
+              className="pt-8 flex items-center gap-4"
+            >
+               <div className="h-[1px] w-12 bg-[var(--color-gold)]/30" />
+               <span className="text-[10px] uppercase tracking-[0.4em] font-bold">Dhaka Metropolitan Delivery</span>
+            </motion.div>
           </div>
 
-          <div className="relative h-[300px] sm:h-[400px] lg:h-[500px] flex items-center justify-center order-1 lg:order-2 px-4 sm:px-0">
+          {/* Right Side Visual - Matches User Provided Image */}
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 1 }}
+            className="relative h-[450px] sm:h-[550px] lg:h-[700px] flex items-center justify-center order-1 lg:order-2"
+          >
             <svg 
-              ref={svgRef}
-              viewBox="0 0 400 600" 
-              className="w-full h-full max-w-[280px] sm:max-w-none drop-shadow-[0_0_30px_rgba(197,160,89,0.1)]"
+              viewBox="0 0 400 700" 
+              className="w-full h-full max-w-[350px] sm:max-w-[450px]"
               fill="none" 
               xmlns="http://www.w3.org/2000/svg"
             >
+              {/* Background Path (Dotted or Faint) */}
               <path 
-                d="M100 500 C150 480, 250 450, 300 350 S100 250, 200 100" 
+                d="M100 600 C150 550, 350 500, 300 350 S100 200, 200 50" 
                 stroke="rgba(197, 160, 89, 0.05)" 
-                strokeWidth="4" 
-                strokeLinecap="round"
+                strokeWidth="2" 
+                strokeDasharray="4 8"
               />
               
+              {/* Animated Glowing Path */}
               <path 
                 ref={pathRef}
-                d="M100 500 C150 480, 250 450, 300 350 S100 250, 200 100" 
+                d="M100 600 C150 550, 350 500, 300 350 S100 200, 200 50" 
                 stroke="var(--color-gold)" 
                 strokeWidth="6" 
                 strokeLinecap="round"
-                className="drop-shadow-[0_0_15px_var(--color-gold)]"
+                className="drop-shadow-[0_0_20px_var(--color-gold)] opacity-80"
               />
               
-              <g className="delivery-node">
-                <circle cx="100" cy="500" r="10" fill="var(--color-gold)" className="animate-pulse" />
-                <text x="70" y="540" fill="var(--color-gold)" className="text-sm font-heading font-bold uppercase tracking-widest drop-shadow-[0_0_8px_rgba(197,160,89,0.5)]">Rampura</text>
-              </g>
+              {/* Rampura Node (Large Serif Label) */}
+              <motion.g 
+                initial={{ opacity: 0, scale: 0 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.5, type: 'spring' }}
+                className="delivery-node"
+              >
+                <circle cx="100" cy="600" r="12" fill="var(--color-gold)" fillOpacity="0.2" />
+                <circle cx="100" cy="600" r="6" fill="var(--color-gold)" className="animate-pulse" />
+                <text 
+                  x="70" y="660" 
+                  fill="var(--color-gold)" 
+                  className="text-2xl font-heading font-black uppercase tracking-[0.2em] opacity-80"
+                  style={{ textShadow: '0 0 10px rgba(197,160,89,0.3)' }}
+                >
+                  RAMPURA
+                </text>
+              </motion.g>
               
-              <g className="delivery-node">
-                <circle cx="300" cy="350" r="8" fill="var(--color-gold)" fillOpacity="0.6" />
-                <text x="320" y="355" fill="var(--color-ivory)" className="text-[10px] font-bold uppercase tracking-widest opacity-40">Dhaka Badda</text>
-              </g>
+              {/* Dhaka Badda Node (Smaller Label) */}
+              <motion.g 
+                initial={{ opacity: 0, scale: 0 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.7, type: 'spring' }}
+                className="delivery-node"
+              >
+                <circle cx="300" cy="350" r="8" fill="var(--color-gold)" fillOpacity="0.3" />
+                <circle cx="300" cy="350" r="4" fill="var(--color-gold)" />
+                <text 
+                  x="320" y="355" 
+                  fill="var(--color-ivory)" 
+                  className="text-[12px] font-bold uppercase tracking-[0.3em] opacity-30"
+                >
+                  DHAKA BADDA
+                </text>
+              </motion.g>
               
-              <g className="delivery-node">
-                <circle cx="200" cy="100" r="10" fill="var(--color-gold)" className="animate-pulse" />
-                <text x="220" y="105" fill="var(--color-gold)" className="text-sm font-heading font-bold uppercase tracking-widest drop-shadow-[0_0_8px_rgba(197,160,89,0.5)]">Kuril</text>
-              </g>
+              {/* Destination Point */}
+              <motion.g 
+                initial={{ opacity: 0, scale: 0 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.9, type: 'spring' }}
+                className="delivery-node"
+              >
+                <circle cx="200" cy="50" r="10" fill="var(--color-gold)" fillOpacity="0.2" />
+                <circle cx="200" cy="50" r="5" fill="var(--color-gold)" className="animate-pulse" />
+              </motion.g>
             </svg>
-          </div>
+
+            {/* Floating Glassmorphism Info (Matches premium feel) */}
+            <motion.div 
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 1.2 }}
+              className="absolute top-1/4 right-0 glass p-4 rounded-2xl hidden lg:block animate-float"
+            >
+                <p className="text-[10px] uppercase tracking-widest font-bold opacity-40 mb-1">Live Tracking</p>
+                <div className="flex items-center gap-2">
+                   <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                   <span className="text-sm font-bold text-[var(--color-gold)]">Order In Transit</span>
+                </div>
+            </motion.div>
+          </motion.div>
         </div>
       </div>
     </section>
   );
 }
 
-function DeliveryInfo({ title, desc }) {
+function DeliveryInfo({ title, desc, delay = 0 }) {
   return (
-    <div className="delivery-text-reveal flex items-start gap-4 group">
+    <motion.div 
+      initial={{ opacity: 0, x: -20 }}
+      whileInView={{ opacity: 1, x: 0 }}
+      viewport={{ once: true }}
+      transition={{ delay }}
+      className="flex items-start gap-4 group"
+    >
       <div className="mt-2 w-2 h-2 rounded-full bg-[var(--color-gold)] shadow-[0_0_10px_var(--color-gold)] flex-shrink-0" />
       <div>
         <h4 className="text-xl font-heading font-bold text-[var(--color-gold)]">{title}</h4>
         <p className="opacity-40 text-sm">{desc}</p>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
 function Footer() {
   return (
-    <footer id="contact" className="py-12 sm:py-20 px-6 border-t border-[var(--color-gold)]/10 bg-[#1b1f13]">
-      <div className="max-w-[1200px] mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-10 md:gap-12 mb-12 sm:mb-20">
-          <div className="text-center md:text-left">
-            <h2 className="text-3xl sm:text-4xl font-heading font-bold text-[var(--color-gold)] mb-2 tracking-tighter">TOKBOX</h2>
-            <p className="opacity-40 text-[10px] sm:text-sm tracking-[0.2em] sm:tracking-[0.3em] uppercase font-bold">Gourmet Street Food Redefined</p>
-          </div>
-          
-          <div className="flex flex-col items-center md:items-end gap-4">
-             <p className="text-[10px] sm:text-sm opacity-50 uppercase tracking-[0.2em]">Contact Us</p>
-             <div className="text-xl sm:text-2xl md:text-3xl font-heading font-bold text-[var(--color-gold)] hover:scale-105 transition-transform cursor-pointer">
-               WhatsApp: +91 377 853 000
-             </div>
-             <div className="flex gap-6 sm:gap-8 mt-2 opacity-60">
-                <Instagram className="w-5 h-5 sm:w-6 sm:h-6 hover:text-[var(--color-gold)] cursor-pointer" />
-                <Facebook className="w-5 h-5 sm:w-6 sm:h-6 hover:text-[var(--color-gold)] cursor-pointer" />
-             </div>
-          </div>
-        </div>
+    <footer id="contact" className="py-12 px-6 bg-[#2A2E12] border-t border-[var(--color-gold)]/10 text-[var(--color-ivory)]">
+      <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row justify-between items-center gap-12">
         
-        <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 opacity-30 text-[8px] sm:text-[10px] uppercase tracking-[0.3em] sm:tracking-[0.4em]">
-          <p>© 2026 TOKBOX COLLECTIVE</p>
-          <p className="text-center md:text-right">Handcrafted for the Streets of Dhaka</p>
+        {/* Left Side: Contact Info */}
+        <div className="space-y-6 text-center md:text-left">
+          <div className="space-y-3">
+            <div className="flex flex-wrap justify-center md:justify-start items-center gap-x-8 gap-y-2 text-[var(--color-gold)]">
+              <div className="flex items-center gap-2">
+                <Phone size={16} className="opacity-70" />
+                <span className="text-sm font-bold tracking-wider">01864959222</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <MessageCircle size={16} className="opacity-70" />
+                <span className="text-sm font-bold tracking-wider">01864959222</span>
+              </div>
+            </div>
+
+            <div className="flex justify-center md:justify-start items-center gap-3 opacity-60">
+              <MapPin size={16} className="text-[var(--color-gold)] flex-shrink-0" />
+              <p className="text-sm leading-relaxed font-medium">
+                Block-A, Sayeed Nagar, Vatara, Dhaka 1212
+              </p>
+            </div>
+
+            <div className="flex justify-center md:justify-start items-center gap-3 opacity-60">
+              <Truck size={16} className="text-[var(--color-gold)]" />
+              <p className="text-xs uppercase tracking-[0.2em] font-bold">Delivery Available</p>
+            </div>
+          </div>
         </div>
+
+        {/* Right Side: Social Connections */}
+        <div className="flex gap-8 md:gap-12">
+          <div className="flex items-center gap-3 group cursor-pointer">
+            <div className="w-10 h-10 rounded-full border border-[var(--color-gold)]/30 flex items-center justify-center group-hover:bg-[var(--color-gold)] group-hover:text-[var(--color-olive)] transition-all">
+              <Facebook size={18} />
+            </div>
+            <div className="hidden sm:block">
+              <p className="text-[10px] uppercase tracking-widest font-bold opacity-40">Facebook</p>
+              <p className="text-sm font-bold">TokBox</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 group cursor-pointer">
+            <div className="w-10 h-10 rounded-full border border-[var(--color-gold)]/30 flex items-center justify-center group-hover:bg-[var(--color-gold)] group-hover:text-[var(--color-olive)] transition-all">
+              <Instagram size={18} />
+            </div>
+            <div className="hidden sm:block">
+              <p className="text-[10px] uppercase tracking-widest font-bold opacity-40">Instagram</p>
+              <p className="text-sm font-bold">@tokbox.bd</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div className="max-w-[1200px] mx-auto mt-12 pt-8 border-t border-white/5 flex justify-between items-center opacity-20 text-[9px] uppercase tracking-[0.4em] font-bold">
+        <p>© 2026 TOKBOX COLLECTIVE</p>
+        <p className="hidden sm:block">Handcrafted in Dhaka</p>
       </div>
     </footer>
   );

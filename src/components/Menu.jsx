@@ -37,53 +37,61 @@ const MENU_ITEMS = [
   }
 ];
 
+import { motion } from 'framer-motion';
+
 export default function Menu() {
   const sectionRef = useRef(null);
+  const { addToCart, systemConfig } = useOrders();
 
-  useLayoutEffect(() => {
-    const ctx = gsap.context(() => {
-      gsap.from(".menu-title", {
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top 80%",
-        },
-        y: 50,
-        opacity: 0,
-        duration: 1,
-        ease: "power3.out"
-      });
-
-      gsap.from(".menu-card", {
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top 70%",
-        },
-        y: 100,
-        opacity: 0,
-        stagger: 0.15,
-        duration: 1.5,
-        ease: "expo.out"
-      });
-    }, sectionRef);
-
-    return () => ctx.revert();
-  }, []);
+  // Simulated fetch from D1 (since I don't have the Cloudflare environment)
+  const [items, setItems] = React.useState(MENU_ITEMS);
 
   return (
     <section id="menu" ref={sectionRef} className="py-24 sm:py-32 lg:py-48 px-6 bg-[var(--color-olive)] relative z-20">
       <div className="max-w-[1200px] mx-auto">
+        {systemConfig.isOrdersFrozen && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-12 p-4 glass-dark border border-red-500/30 rounded-2xl text-center"
+          >
+            <p className="text-red-400 font-bold uppercase tracking-widest text-sm">
+              ❄️ {systemConfig.freezeMessage}
+            </p>
+          </motion.div>
+        )}
+
         <div className="mb-20 text-center">
-          <h2 className="menu-title text-5xl md:text-7xl font-heading font-bold mb-4">
+          <motion.h2 
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-5xl md:text-7xl font-heading font-bold mb-4"
+          >
             The <span className="text-[var(--color-gold)]">Collection</span>
-          </h2>
-          <p className="menu-title text-lg opacity-50 max-w-xl mx-auto uppercase tracking-widest">
+          </motion.h2>
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="text-lg opacity-50 max-w-xl mx-auto uppercase tracking-widest"
+          >
             Handcrafted street food elevated for the modern palate.
-          </p>
+          </motion.p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-          {MENU_ITEMS.map((item) => (
-            <MenuCard key={item.id} {...item} />
+          {items.map((item, idx) => (
+            <motion.div
+              key={item.id}
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: idx * 0.1 }}
+            >
+              <MenuCard {...item} />
+            </motion.div>
           ))}
         </div>
       </div>
@@ -96,7 +104,23 @@ function MenuCard({ id, title, price, size, img }) {
   const imgRef = useRef(null);
   const glowRef = useRef(null);
   const contentRef = useRef(null);
-  const { addToCart } = useOrders();
+  const { addToCart, systemConfig } = useOrders();
+
+  // Convert string price to number for the new context
+  const numericPrice = parseInt(price.replace(' tk', ''));
+
+  const handleAddToCart = () => {
+    if (systemConfig.isOrdersFrozen) return;
+    addToCart({
+      id: String(id),
+      name: title,
+      price: numericPrice,
+      image: img,
+      category: 'Street Food',
+      description: 'Handcrafted signature dish',
+      isAvailable: true
+    });
+  };
 
   useEffect(() => {
     const card = cardRef.current;
@@ -156,8 +180,8 @@ function MenuCard({ id, title, price, size, img }) {
   return (
     <div 
       ref={cardRef}
-      className={`menu-card relative h-[380px] sm:h-[450px] group cursor-pointer perspective-1000 z-1 ${size}`}
-      onClick={() => addToCart({ id, title, price, img })}
+      className={`menu-card relative h-[380px] sm:h-[450px] group cursor-pointer perspective-1000 z-1 ${size} ${systemConfig.isOrdersFrozen ? 'grayscale pointer-events-none opacity-60' : ''}`}
+      onClick={handleAddToCart}
     >
       {/* Background Split with rounded corners and overflow hidden */}
       <div className="absolute inset-0 flex flex-col rounded-[32px] overflow-hidden">

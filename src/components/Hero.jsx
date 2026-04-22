@@ -1,163 +1,133 @@
-import React, { useLayoutEffect, useRef } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
 export default function Hero() {
-  const containerRef = useRef(null);
-  const leftContentRef = useRef(null);
-  const rightContentRef = useRef(null);
-  const bgTextRef = useRef(null);
+  const sectionRef = useRef(null);
+  const videoRef = useRef(null);
+  const [textVisible, setTextVisible] = useState(false);
 
+  // --- GSAP Video Scrubbing ---
   useLayoutEffect(() => {
-    let ctx = gsap.context(() => {
-      const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
+    const section = sectionRef.current;
+    const video = videoRef.current;
+    if (!section || !video) return;
 
-      tl.from(containerRef.current, {
-        opacity: 0,
-        duration: 1.5,
-      })
-      .from(bgTextRef.current, {
-        y: 100,
-        opacity: 0,
-        duration: 2,
-      }, "-=1")
-      .from(leftContentRef.current.children, {
-        x: -50,
-        opacity: 0,
-        stagger: 0.2,
-        duration: 1.2,
-      }, "-=1.5")
-      .from(rightContentRef.current, {
-        scale: 0.8,
-        opacity: 0,
-        duration: 1.5,
-      }, "-=1.2");
-
-      // Parallax Effects
-      gsap.to(rightContentRef.current, {
+    // We need to wait for metadata to know the video duration
+    const initScroll = () => {
+      const tl = gsap.timeline({
         scrollTrigger: {
-          trigger: containerRef.current,
-          start: "top top",
-          end: "bottom top",
-          scrub: true,
-        },
-        y: 100,
-        rotate: 5,
-        ease: "none"
+          trigger: section,
+          start: 'top top',
+          end: '+=300%', // 300vh total scroll distance
+          pin: true,
+          scrub: 1, // Smoothly catch up to scroll
+          onUpdate: (self) => {
+            setTextVisible(self.progress >= 0.85);
+          }
+        }
       });
 
-      gsap.to(leftContentRef.current, {
-        scrollTrigger: {
-          trigger: containerRef.current,
-          start: "top top",
-          end: "bottom top",
-          scrub: true,
-        },
-        y: -50,
-        ease: "none"
-      });
+      // 0% -> 70% scroll: Ingredients assembly (maps to first 70% of video)
+      tl.to(video, {
+        currentTime: video.duration * 0.7,
+        ease: "none",
+        duration: 0.7,
+      }, 0);
 
-      gsap.to(bgTextRef.current, {
-        scrollTrigger: {
-          trigger: containerRef.current,
-          start: "top top",
-          end: "bottom top",
-          scrub: true,
-        },
-        y: -150,
-        ease: "none"
-      });
-    }, containerRef);
+      // 70% -> 85% scroll: Explosion (maps to 70% -> 95% of video)
+      tl.to(video, {
+        currentTime: video.duration * 0.95,
+        ease: "power1.inOut",
+        duration: 0.15,
+      }, 0.7);
 
-    return () => ctx.revert();
+      // 85% -> 100% scroll: Freeze on final frame/result
+      tl.to(video, {
+        currentTime: video.duration,
+        ease: "none",
+        duration: 0.15,
+      }, 0.85);
+    };
+
+    if (video.readyState >= 1) {
+      initScroll();
+    } else {
+      video.addEventListener('loadedmetadata', initScroll);
+    }
+
+    return () => {
+      ScrollTrigger.getAll().forEach(st => {
+        if (st.trigger === section) st.kill();
+      });
+    };
   }, []);
 
   return (
-    <section 
-      ref={containerRef} 
-      className="relative min-h-screen bg-[var(--color-olive)] overflow-hidden flex items-center"
+    <section
+      ref={sectionRef}
+      className="relative w-full h-screen bg-[#1b1f13] overflow-hidden"
     >
-      {/* Background Decorative Text */}
-      <div 
-        ref={bgTextRef}
-        className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden"
-      >
-        <span className="text-[25vw] font-black text-white/[0.02] leading-none tracking-tighter">
-          TOKBOX
-        </span>
+      {/* 2K Cinematic Video Player */}
+      <video
+        ref={videoRef}
+        src="/assets/Fuchka_Explosion_Cinematic_Food_Ad.mp4"
+        className="absolute inset-0 w-full h-full object-cover"
+        muted
+        playsInline
+        preload="auto"
+      />
+
+      {/* Cinematic Depth Overlays */}
+      <div className="absolute inset-0 pointer-events-none z-5">
+        {/* Subtle Vignette */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_30%,rgba(0,0,0,0.5)_100%)]" />
+        {/* Gradient Bottom Fade */}
+        <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-[#1b1f13] to-transparent opacity-60" />
       </div>
 
-      {/* Background Atmosphere */}
-      <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-[var(--color-gold)]/5 to-transparent pointer-events-none" />
-
-      <div className="relative z-10 w-full max-w-[1400px] mx-auto px-6 lg:px-12 grid lg:grid-cols-2 gap-12 items-center pt-20">
-        
-        {/* Left: Text Content (The "Proportional" Balance) */}
-        <div ref={leftContentRef} className="flex flex-col items-start space-y-6 lg:space-y-8">
-          <div className="space-y-2">
-            <span className="text-[var(--color-gold)] font-bold tracking-[0.3em] uppercase text-xs sm:text-sm">
-              Premium Street Food Experience
-            </span>
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-heading font-black text-[var(--color-ivory)] leading-[0.9] tracking-tighter">
-              TASTE THE <br />
-              <span className="text-[var(--color-gold)]">EXTRAORDINARY</span>
-            </h1>
-          </div>
-          
-          <p className="text-lg text-[var(--color-ivory)]/60 max-w-md leading-relaxed font-medium">
-            Discover the perfect fusion of traditional street flavors and gourmet craftsmanship. Every bite is a journey through excellence.
-          </p>
-
-          <div className="flex flex-wrap gap-4 pt-4">
-            <button className="px-8 py-4 bg-[var(--color-gold)] text-[var(--color-olive)] font-bold rounded-full hover:bg-[var(--color-ivory)] transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-[0_10px_30px_rgba(197,160,89,0.3)]">
-              ORDER NOW
-            </button>
-            <button className="px-8 py-4 border border-[var(--color-gold)]/30 text-[var(--color-gold)] font-bold rounded-full hover:bg-[var(--color-gold)]/10 transition-all duration-300">
-              VIEW MENU
-            </button>
-          </div>
-
-          <div className="flex items-center gap-6 pt-8 w-full">
-            <div className="flex -space-x-3">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="w-10 h-10 rounded-full border-2 border-[var(--color-olive)] bg-[var(--color-gold)]/20 flex items-center justify-center text-[10px] font-bold">
-                  {i}k+
-                </div>
-              ))}
-            </div>
-            <p className="text-xs font-medium text-[var(--color-ivory)]/40 tracking-wider uppercase">
-              Happy Customers <br /> Served Daily
-            </p>
-          </div>
-        </div>
-
-        {/* Right: Signature Dish (The "Proportional" Hero) */}
-        <div 
-          ref={rightContentRef}
-          className="relative flex items-center justify-center"
+      {/* Text Overlay Section */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+        <div
+          className="text-center px-6 max-w-5xl"
+          style={{
+            opacity: textVisible ? 1 : 0,
+            transform: textVisible ? 'translateY(0) scale(1)' : 'translateY(40px) scale(0.98)',
+            filter: textVisible ? 'blur(0px)' : 'blur(10px)',
+            transition: 'all 1.2s cubic-bezier(0.16, 1, 0.3, 1)',
+          }}
         >
-          {/* Main Dish Image */}
-          <div className="relative w-full aspect-square max-w-[600px] group">
-            <div className="absolute inset-0 bg-[var(--color-gold)]/10 blur-[120px] rounded-full group-hover:bg-[var(--color-gold)]/20 transition-all duration-700" />
-            <img 
-              src="/assets/tok classic.png" 
-              className="w-full h-full object-contain relative z-10 drop-shadow-[0_40px_80px_rgba(0,0,0,0.6)] animate-float"
-              alt="Signature Tok Classic" 
-            />
-          </div>
-
-          {/* Floating Info Badge */}
-          <div className="absolute -right-4 top-1/4 glass p-4 rounded-2xl shadow-2xl border border-[var(--color-gold)]/20 hidden md:block animate-float" style={{ animationDelay: '-2s' }}>
-            <p className="text-[var(--color-gold)] font-bold text-xl">100%</p>
-            <p className="text-[var(--color-ivory)]/60 text-[10px] uppercase tracking-widest font-bold">Organic Ingredients</p>
-          </div>
+          <span className="inline-block text-[#c5a059] font-bold tracking-[0.5em] uppercase text-[10px] sm:text-xs mb-8 py-2 px-4 border-y border-[#c5a059]/20 backdrop-blur-sm">
+            Doi Fuchka Collective
+          </span>
+          <h1 className="text-6xl md:text-9xl font-heading font-black text-[#f5f5f1] leading-[0.85] tracking-tighter mb-10 drop-shadow-2xl">
+            Doi Fuchka <br />
+            <span className="text-[#c5a059] italic">Experience</span>
+          </h1>
+          <p className="text-xl md:text-3xl text-[#f5f5f1]/70 font-medium tracking-wide max-w-2xl mx-auto leading-relaxed">
+            Taste the explosion of flavors in every handcrafted bite.
+          </p>
         </div>
-
       </div>
 
+      {/* Dynamic Scroll Hint */}
+      <div 
+        className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 transition-all duration-700 pointer-events-none"
+        style={{ 
+          opacity: textVisible ? 0 : 0.6,
+          transform: textVisible ? 'translateY(20px)' : 'translateY(0)'
+        }}
+      >
+        <span className="text-[#f5f5f1] text-[9px] tracking-[0.4em] uppercase font-bold">Initiate Journey</span>
+        <div className="w-[1px] h-16 bg-gradient-to-b from-[#c5a059] to-transparent relative">
+          <div className="absolute top-0 left-0 w-full h-1/2 bg-[#c5a059] animate-bounce" />
+        </div>
+      </div>
     </section>
   );
 }
+
+
 
