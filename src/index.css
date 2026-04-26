@@ -2,10 +2,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Montserrat:wght@100..900&display=swap');
 
 @theme {
-  --color-olive: #1b1f13;
-  --color-gold: #c5a059;
-  --color-gold-muted: rgba(197, 160, 89, 0.2);
-  --color-ivory: #f5f5f1;
+  /* --- Minimal Olive Brandy Palette --- */
+  --color-olive: #F7F9F2;
+  --color-ivory: #2C3322;
+  --color-gold: #52682D;
+  --color-gold-muted: rgba(82, 104, 45, 0.18);
+  --color-sage: #96B85D;
+  --color-sage-muted: rgba(150, 184, 93, 0.22);
+
   --font-heading: 'Playfair Display', serif;
   --font-body: 'Montserrat', sans-serif;
 }
@@ -20,6 +24,26 @@
   50% { transform: scale(1.5); opacity: 0.3; }
 }
 
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes bounce-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes slide-in-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .animate-float {
   animation: float 6s ease-in-out infinite;
 }
@@ -28,9 +52,60 @@
   animation: pulse-gold 4s ease-in-out infinite;
 }
 
+.animate-glow-pulse {
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 2.5s ease-in-out infinite;
+}
+
+.text-gradient-gold {
+  /* Subtle olive gradient for headings — premium feel */
+  background: linear-gradient(135deg, #52682D 0%, #96B85D 50%, #52682D 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.glass-hover {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(150, 184, 93, 0.25);
+  transition: border-color 0.3s, background 0.3s, box-shadow 0.3s;
+  border-radius: 1.5rem;
+}
+
+.glass-hover:hover {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(82, 104, 45, 0.35);
+  box-shadow: 0 6px 24px rgba(82, 104, 45, 0.08);
+}
+
+.nav-link-underline {
+  position: relative;
+}
+
+.nav-link-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: var(--color-gold);
+  transition: width 0.3s ease;
+}
+
+.nav-link-underline:hover::after {
+  width: 100%;
+}
+
 :root {
-  --glass-bg: rgba(255, 255, 255, 0.03);
-  --glass-border: rgba(197, 160, 89, 0.2);
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-border: rgba(150, 184, 93, 0.25);
   --glass-blur: 12px;
 }
 
@@ -41,37 +116,43 @@ html, body, #root {
   background-color: var(--color-olive);
   color: var(--color-ivory);
   font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .font-heading {
   font-family: var(--font-heading);
 }
 
-/* Custom Grain Overlay */
+/* Grain overlay — soft warmth on light canvas */
 .grain-overlay {
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 9999;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
 }
 
-/* Glassmorphism */
+/* Glass — light card surface with sage border */
 .glass {
   background: var(--glass-bg);
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
   border: 1px solid var(--glass-border);
+  border-radius: 1.5rem;
 }
 
 .glass-dark {
-  background: rgba(0, 0, 0, 0.2);
+  /* "dark" now means slightly more saturated — sage tint */
+  background: rgba(150, 184, 93, 0.08);
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
-  border: 1px solid rgba(197, 160, 89, 0.1);
+  border: 1px solid rgba(82, 104, 45, 0.15);
+  border-radius: 1.5rem;
 }
 
-/* Custom Scrollbar */
+/* Scrollbar — olive on cream */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -89,4 +170,30 @@ html, body, #root {
 
 .border-gold {
   border-color: var(--color-gold);
+}
+
+.text-sage {
+  color: var(--color-sage);
+}
+
+.bg-sage {
+  background-color: var(--color-sage);
+}
+
+.border-sage {
+  border-color: var(--color-sage);
+}
+
+/* Soft rounded + subtle depth helpers (Brandy aesthetic) */
+.brandy-card {
+  background: #FFFFFF;
+  border: 1px solid rgba(150, 184, 93, 0.25);
+  border-radius: 1.75rem;
+  box-shadow: 0 1px 2px rgba(44, 51, 34, 0.03), 0 6px 20px rgba(82, 104, 45, 0.05);
+}
+
+/* Selection */
+::selection {
+  background: var(--color-gold);
+  color: var(--color-olive);
 }
